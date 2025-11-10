@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulación de Notificaciones</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    #container {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+    }
+
+    #sidebar {
+      width: 250px;
+      background-color: #333;
+      color: white;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    #sidebar h3 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    .collapsible {
+      cursor: pointer;
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #444;
+      color: white;
+      border: none;
+      width: 100%;
+      text-align: left;
+      font-size: 16px;
+    }
+
+    .content {
+      margin-left: 20px;
+      display: none;
+      padding: 10px;
+      background-color: #555;
+    }
+
+    #mainContent {
+      flex-grow: 1;
+      padding: 20px;
+      background-color: #fff;
+      overflow-y: auto;
+    }
+
+    .add-button {
+      background-color: #007BFF;
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+    }
+
+    #notificaciones {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background-color: #f0ad4e;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+      width: 300px;
+    }
+
+    .notificacion {
+      background-color: #d9534f;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .notificacion span {
+      font-weight: bold;
+    }
+
+    .close-notification {
+      cursor: pointer;
+      color: white;
+    }
+
+    .logout-button {
+      background-color: #FF5733;
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <a href="../index.html">← Volver al panel</a>
+
+  <div id="container">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <h3>Simulación de Notificaciones</h3>
+      <button class="collapsible">Notificaciones</button>
+      <div class="content">
+        <button class="add-button" onclick="mostrarNotificaciones()">Mostrar Notificaciones</button>
+        <button class="add-button" onclick="agregarNotificacion()">Agregar Notificación</button>
+      </div>
+      <button class="logout-button" onclick="logout()">Cerrar sesión</button>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+      <h2>Bienvenido al Sistema de Notificaciones</h2>
+      <p>Seleccione una opción del menú lateral.</p>
+    </div>
+  </div>
+
+  <!-- Notificaciones -->
+  <div id="notificaciones"></div>
+
+  <script>
+    // Lógica para gestionar las notificaciones
+    const notificaciones = JSON.parse(localStorage.getItem('notificaciones')) || [];
+
+    // Mostrar notificaciones
+    function mostrarNotificaciones() {
+      const mainContent = document.getElementById('mainContent');
+      mainContent.innerHTML = `
+        <h2>Notificaciones</h2>
+        <ul id="notificaciones-list">
+          ${notificaciones.map(notificacion => `
+            <li class="notificacion">
+              <span>${notificacion.mensaje}</span>
+              <span class="close-notification" onclick="cerrarNotificacion('${notificacion.id}')">X</span>
+            </li>`).join('')}
+        </ul>
+        <button class="add-button" onclick="agregarNotificacion()">Agregar Notificación</button>
+      `;
+    }
+
+    // Agregar una nueva notificación
+    function agregarNotificacion() {
+      const tipo = prompt("Ingrese el tipo de notificación (Licencia/Mantenimiento):");
+      const mensaje = prompt("Ingrese el mensaje de la notificación:");
+
+      const notificacion = {
+        id: Date.now().toString(), // Usamos la fecha como ID único
+        tipo,
+        mensaje,
+        fecha: new Date().toLocaleString(),
+        visto: false
+      };
+
+      notificaciones.push(notificacion);
+      localStorage.setItem('notificaciones', JSON.stringify(notificaciones)); // Guardar en localStorage
+
+      mostrarNotificaciones(); // Actualizar la lista de notificaciones
+      mostrarNotificacionPopup(mensaje); // Mostrar notificación emergente
+    }
+
+    // Mostrar notificación emergente
+    function mostrarNotificacionPopup(mensaje) {
+      const popup = document.getElementById('notificaciones');
+      popup.style.display = 'block';
+      popup.innerHTML = `
+        <div class="notificacion">
+          <span>${mensaje}</span>
+          <span class="close-notification" onclick="cerrarPopup()">X</span>
+        </div>
+      `;
+    }
+
+    // Cerrar notificación emergente
+    function cerrarPopup() {
+      const popup = document.getElementById('notificaciones');
+      popup.style.display = 'none';
+    }
+
+    // Cerrar una notificación
+    function cerrarNotificacion(id) {
+      const index = notificaciones.findIndex(n => n.id === id);
+      if (index !== -1) {
+        notificaciones.splice(index, 1); // Eliminar la notificación del arreglo
+        localStorage.setItem('notificaciones', JSON.stringify(notificaciones)); // Actualizar en localStorage
+        mostrarNotificaciones(); // Actualizar la lista de notificaciones
+      }
+    }
+
+    // Logout
+    function logout() {
+      localStorage.removeItem('usuario_autenticado');
+      alert("Has cerrado sesión.");
+      window.location.reload();
+    }
+
+    // Cargar notificaciones al iniciar
+    window.onload = function() {
+      if (notificaciones.length > 0) {
+        mostrarNotificacionPopup(notificaciones[notificaciones.length - 1].mensaje);
+      }
+    };
+  </script>
+  <script type="module" src="../scripts/control_acceso.js"></script>
+  <script>
+    document.getElementById('btnLogout')?.addEventListener('click', () => {
+      localStorage.removeItem('usuario_autenticado');
+      localStorage.removeItem('session_expires');
+      location.href = 'login.html';
+    });
+  </script>
+
+</body>
+</html>

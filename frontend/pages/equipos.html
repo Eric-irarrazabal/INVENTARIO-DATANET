@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Equipos</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    #container {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+    }
+
+    #sidebar {
+      width: 250px;
+      background-color: #333;
+      color: white;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    #sidebar h3 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    .collapsible {
+      cursor: pointer;
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #444;
+      color: white;
+      border: none;
+      width: 100%;
+      text-align: left;
+      font-size: 16px;
+    }
+
+    .content {
+      margin-left: 20px;
+      display: none;
+      padding: 10px;
+      background-color: #555;
+    }
+
+    #mainContent {
+      flex-grow: 1;
+      padding: 20px;
+      background-color: #fff;
+      overflow-y: auto;
+    }
+
+    .add-button {
+      background-color: #007BFF;
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .button-container {
+      margin-top: 20px;
+    }
+
+    .input-field {
+      margin-bottom: 10px;
+      padding: 5px;
+      width: 100%;
+    }
+
+    .logout-button {
+      background-color: #FF5733;
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <a href="../index.html">← Volver al panel</a>
+
+  <div id="container">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <h3>Gestión de Equipos</h3>
+      <button class="collapsible">Gestión de Equipos</button>
+      <div class="content">
+        <button class="add-button" onclick="mostrarEquipos()">Mostrar Equipos</button>
+        <button class="add-button" onclick="agregarEquipo()">Agregar Nuevo Equipo</button>
+      </div>
+      <button class="logout-button" onclick="logout()">Cerrar sesión</button>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+      <h2>Bienvenido al Sistema de Gestión de Equipos</h2>
+      <p>Seleccione una opción del menú lateral.</p>
+    </div>
+  </div>
+
+  <script>
+    // Lógica para gestionar los equipos
+    const equipos = JSON.parse(localStorage.getItem('equipos')) || [];
+
+    // Mostrar equipos
+    function mostrarEquipos() {
+      const mainContent = document.getElementById('mainContent');
+      mainContent.innerHTML = `
+        <h2>Equipos</h2>
+        <div class="button-container">
+            <button class="add-button" onclick="exportarEquipos()">Exportar a CSV</button>
+            <button class="add-button" onclick="exportarEquiposXLSX()">Exportar a XLSX</button>
+            <br><br>
+            <input type="file" id="csvFile" accept=".csv" />
+            <button class="add-button" onclick="importarCSV()">Importar CSV</button>
+            <br><br>
+            <input type="file" id="xlsxFile" accept=".xlsx, .xls" />
+            <button class="add-button" onclick="importarXLSX()">Importar XLSX</button>
+        </div>
+        <ul id="equipos-list">
+          ${equipos.map(equipo => `<li>${equipo.nombre} - ${equipo.estado} <button onclick="editarEquipo('${equipo.id}')">Editar</button> <button onclick="eliminarEquipo('${equipo.id}')">Eliminar</button></li>`).join('')}
+        </ul>
+        <button class="add-button" onclick="agregarEquipo()">Agregar Nuevo Equipo</button>
+      `;
+    }
+
+    // Agregar un equipo
+    function agregarEquipo() {
+      const nombre = prompt("Ingrese el nombre del equipo:");
+      const estado = prompt("Ingrese el estado del equipo (Activo/Baja/Asignado):");
+      const dependencia = prompt("Ingrese la dependencia del equipo:");
+      const usuario = prompt("Ingrese el usuario asignado:");
+      const sede = prompt("Ingrese la sede del equipo:");
+      const categoria = prompt("Ingrese la categoría (PC, Laptop, etc.):");
+      const marca = prompt("Ingrese la marca del equipo:");
+      const modelo = prompt("Ingrese el modelo del equipo:");
+      const nro_serie = prompt("Ingrese el número de serie:");
+      const fecha_alta = new Date().toLocaleDateString();
+
+      const equipo = {
+        id: Date.now().toString(), // Usamos la fecha como ID único
+        nombre,
+        estado,
+        dependencia,
+        usuario,
+        sede,
+        categoria,
+        marca,
+        modelo,
+        nro_serie,
+        fecha_alta
+      };
+
+      equipos.push(equipo);
+      localStorage.setItem('equipos', JSON.stringify(equipos)); // Guardar en localStorage
+      mostrarEquipos(); // Actualizar la lista de equipos
+    }
+
+    // Editar un equipo
+    function editarEquipo(id) {
+      const equipo = equipos.find(eq => eq.id === id);
+      if (equipo) {
+        const nombre = prompt("Editar nombre del equipo:", equipo.nombre);
+        const estado = prompt("Editar estado del equipo:", equipo.estado);
+        const dependencia = prompt("Editar dependencia del equipo:", equipo.dependencia);
+        const usuario = prompt("Editar usuario asignado:", equipo.usuario);
+        const sede = prompt("Editar sede del equipo:", equipo.sede);
+        const categoria = prompt("Editar categoría del equipo:", equipo.categoria);
+        const marca = prompt("Editar marca del equipo:", equipo.marca);
+        const modelo = prompt("Editar modelo del equipo:", equipo.modelo);
+        const nro_serie = prompt("Editar número de serie del equipo:", equipo.nro_serie);
+
+        equipo.nombre = nombre;
+        equipo.estado = estado;
+        equipo.dependencia = dependencia;
+        equipo.usuario = usuario;
+        equipo.sede = sede;
+        equipo.categoria = categoria;
+        equipo.marca = marca;
+        equipo.modelo = modelo;
+        equipo.nro_serie = nro_serie;
+
+        localStorage.setItem('equipos', JSON.stringify(equipos)); // Guardar los cambios en localStorage
+        mostrarEquipos(); // Actualizar la lista
+      }
+    }
+
+    // Eliminar un equipo
+    function eliminarEquipo(id) {
+      const confirmacion = confirm("¿Estás seguro de eliminar este equipo?");
+      if (confirmacion) {
+        const index = equipos.findIndex(eq => eq.id === id);
+        if (index !== -1) {
+          equipos.splice(index, 1); // Eliminar el equipo del arreglo
+          localStorage.setItem('equipos', JSON.stringify(equipos)); // Actualizar en localStorage
+          mostrarEquipos(); // Actualizar la lista
+        }
+      }
+    }
+
+    // Logout
+    function logout() {
+      localStorage.removeItem('usuario_autenticado');
+      alert("Has cerrado sesión.");
+      window.location.reload();
+    }
+
+    // Cargar equipos al iniciar
+    window.onload = function() {
+      mostrarEquipos(); // Cargar equipos desde localStorage al cargar la página
+    };
+  </script>
+  </script>
+  <script type="module" src="../scripts/control_acceso.js"></script>
+  <script>
+    document.getElementById('btnLogout')?.addEventListener('click', () => {
+      localStorage.removeItem('usuario_autenticado');
+      localStorage.removeItem('session_expires');
+      location.href = 'login.html';
+    });
+  </script>
+
+</body>
+</html>

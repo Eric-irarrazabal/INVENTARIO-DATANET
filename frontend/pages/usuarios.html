@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Usuarios</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    #container {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+    }
+
+    #sidebar {
+      width: 250px;
+      background-color: #333;
+      color: white;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    #sidebar h3 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    .collapsible {
+      cursor: pointer;
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #444;
+      color: white;
+      border: none;
+      width: 100%;
+      text-align: left;
+      font-size: 16px;
+    }
+
+    .content {
+      margin-left: 20px;
+      display: none;
+      padding: 10px;
+      background-color: #555;
+    }
+
+    #mainContent {
+      flex-grow: 1;
+      padding: 20px;
+      background-color: #fff;
+      overflow-y: auto;
+    }
+
+    .add-button {
+      background-color: #007BFF;
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .button-container {
+      margin-top: 20px;
+    }
+
+    .input-field {
+      margin-bottom: 10px;
+      padding: 5px;
+      width: 100%;
+    }
+
+    .logout-button {
+      background-color: #FF5733;
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <a href="../index.html">← Volver al panel</a>
+
+  <div id="container">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <h3>Gestión de Usuarios</h3>
+      <button class="collapsible">Gestión de Usuarios</button>
+      <div class="content">
+        <button class="add-button" onclick="mostrarUsuarios()">Mostrar Usuarios</button>
+        <button class="add-button" onclick="agregarUsuario()">Agregar Nuevo Usuario</button>
+      </div>
+      <button class="logout-button" onclick="logout()">Cerrar sesión</button>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+      <h2>Bienvenido al Sistema de Gestión de Usuarios</h2>
+      <p>Seleccione una opción del menú lateral.</p>
+    </div>
+  </div>
+
+  <script>
+    // Lógica para gestionar los usuarios
+    const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+
+    // Mostrar usuarios
+    function mostrarUsuarios() {
+      const mainContent = document.getElementById('mainContent');
+      mainContent.innerHTML = `
+        <h2>Usuarios</h2>
+        <ul id="usuarios-list">
+          ${usuarios.map(usuario => `<li>${usuario.nombre} - ${usuario.cargo} - ${usuario.rol} <button onclick="editarUsuario('${usuario.id}')">Editar</button> <button onclick="eliminarUsuario('${usuario.id}')">Eliminar</button></li>`).join('')}
+        </ul>
+        <button class="add-button" onclick="agregarUsuario()">Agregar Nuevo Usuario</button>
+      `;
+    }
+
+    // Agregar un nuevo usuario
+    function agregarUsuario() {
+      const nombre = prompt("Ingrese el nombre del usuario:");
+      const correo = prompt("Ingrese el correo del usuario:");
+      const cargo = prompt("Ingrese el cargo del usuario:");
+      const rol = prompt("Ingrese el rol del usuario (Admin, Técnico, Usuario Cliente):");
+      const sede = prompt("Ingrese la sede del usuario:");
+      const dependencia = prompt("Ingrese la dependencia del usuario:");
+
+      const usuario = {
+        id: Date.now().toString(), // Usamos la fecha como ID único
+        nombre,
+        correo,
+        cargo,
+        rol,
+        sede,
+        dependencia,
+        equipos_asignados: [] // Inicialmente no tiene equipos asignados
+      };
+
+      usuarios.push(usuario);
+      localStorage.setItem('usuarios', JSON.stringify(usuarios)); // Guardar en localStorage
+      mostrarUsuarios(); // Actualizar la lista de usuarios
+    }
+
+    // Editar un usuario
+    function editarUsuario(id) {
+      const usuario = usuarios.find(u => u.id === id);
+      if (usuario) {
+        const nombre = prompt("Editar nombre del usuario:", usuario.nombre);
+        const correo = prompt("Editar correo del usuario:", usuario.correo);
+        const cargo = prompt("Editar cargo del usuario:", usuario.cargo);
+        const rol = prompt("Editar rol del usuario:", usuario.rol);
+        const sede = prompt("Editar sede del usuario:", usuario.sede);
+        const dependencia = prompt("Editar dependencia del usuario:", usuario.dependencia);
+
+        usuario.nombre = nombre;
+        usuario.correo = correo;
+        usuario.cargo = cargo;
+        usuario.rol = rol;
+        usuario.sede = sede;
+        usuario.dependencia = dependencia;
+
+        localStorage.setItem('usuarios', JSON.stringify(usuarios)); // Guardar los cambios en localStorage
+        mostrarUsuarios(); // Actualizar la lista
+      }
+    }
+
+    // Eliminar un usuario
+    function eliminarUsuario(id) {
+      const confirmacion = confirm("¿Estás seguro de eliminar este usuario?");
+      if (confirmacion) {
+        const index = usuarios.findIndex(u => u.id === id);
+        if (index !== -1) {
+          usuarios.splice(index, 1); // Eliminar el usuario del arreglo
+          localStorage.setItem('usuarios', JSON.stringify(usuarios)); // Actualizar en localStorage
+          mostrarUsuarios(); // Actualizar la lista
+        }
+      }
+    }
+
+    // Logout
+    function logout() {
+      localStorage.removeItem('usuario_autenticado');
+      alert("Has cerrado sesión.");
+      window.location.reload();
+    }
+
+    // Cargar usuarios al iniciar
+    window.onload = function() {
+      mostrarUsuarios(); // Cargar usuarios desde localStorage al cargar la página
+    };
+  </script>
+  <script type="module" src="../scripts/control_acceso.js"></script>
+  <script>
+    document.getElementById('btnLogout')?.addEventListener('click', () => {
+      localStorage.removeItem('usuario_autenticado');
+      localStorage.removeItem('session_expires');
+      location.href = 'login.html';
+    });
+  </script>
+
+</body>
+</html>

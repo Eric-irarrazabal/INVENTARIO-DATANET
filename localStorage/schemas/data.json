@@ -1,0 +1,99 @@
+{
+  "clientes": {
+    "tenant_1": {
+      "nombre": "Cliente 1",
+      "sedes": {
+        "sede_1": {
+          "nombre": "Sede 1",
+          "direccion": "Dirección Sede 1",
+          "dependencias": {
+            "dep_1": {
+              "nombre": "Dependencia 1",
+              "usuarios": ["user_1", "user_2"],
+              "equipos": ["equipo_1", "equipo_2"]
+            }
+          },
+          "equipos": ["equipo_1", "equipo_2"]
+        }
+      },
+      "usuarios": {
+        "user_1": {
+          "nombre": "Juan Pérez",
+          "correo": "juan@cliente1.com",
+          "cargo": "Administrador",
+          "dependencia_id": "dep_1",
+          "equipos_asignados": ["equipo_1"]
+        },
+        "user_2": {
+          "nombre": "María Gómez",
+          "correo": "maria@cliente1.com",
+          "cargo": "Técnico",
+          "dependencia_id": "dep_1",
+          "equipos_asignados": ["equipo_2"]
+        }
+      },
+      "equipos": {
+        "equipo_1": {
+          "nombre": "PC Dell",
+          "estado": "Activo",
+          "dependencia_id": "dep_1",
+          "usuario_id": "user_1",
+          "categoria": "PC",
+          "marca": "Dell",
+          "modelo": "Optiplex 7050",
+          "nro_serie": "ABC12345",
+          "fecha_alta": "2023-01-01"
+        },
+        "equipo_2": {
+          "nombre": "Laptop HP",
+          "estado": "Activo",
+          "dependencia_id": "dep_1",
+          "usuario_id": "user_2",
+          "categoria": "Laptop",
+          "marca": "HP",
+          "modelo": "EliteBook 850",
+          "nro_serie": "DEF67890",
+          "fecha_alta": "2023-01-01"
+        }
+      },
+      "licencias": {
+        "lic_1": {
+          "producto": "Microsoft 365",
+          "fecha_compra": "2023-01-01",
+          "fecha_expira": "2024-01-01",
+          "proveedor": "Microsoft",
+          "activo_id": "equipo_1"
+        }
+      },
+      "movimientos": [
+        {
+          "id": "mov_1",
+          "activo_id": "equipo_1",
+          "origen": "bodega",
+          "destino": "dep_1",
+          "fecha": "2023-01-01",
+          "usuario": "admin"
+        }
+      ],
+      "auditoria": [
+        {
+          "fecha": "2023-01-01",
+          "accion": "Creación de equipo",
+          "usuario": "admin",
+          "detalle": "Se creó el equipo PC Dell en Sede 1"
+        }
+      ]
+    },
+        
+    "usuario_autenticado": {
+        "id": "user_1",
+        "nombre": "Juan Pérez",
+        "correo": "juan@cliente1.com",
+        "rol": "Admin Cliente",
+        "tenant_id": "tenant_1"
+    }
+
+
+  }
+  
+}

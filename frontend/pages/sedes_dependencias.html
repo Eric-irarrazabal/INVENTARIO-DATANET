@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Sedes y Dependencias</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    #container {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+    }
+
+    #sidebar {
+      width: 250px;
+      background-color: #333;
+      color: white;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    #sidebar h3 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    .collapsible {
+      cursor: pointer;
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #444;
+      color: white;
+      border: none;
+      width: 100%;
+      text-align: left;
+      font-size: 16px;
+    }
+
+    .content {
+      margin-left: 20px;
+      display: none;
+      padding: 10px;
+      background-color: #555;
+    }
+
+    #mainContent {
+      flex-grow: 1;
+      padding: 20px;
+      background-color: #fff;
+      overflow-y: auto;
+    }
+
+    .add-button {
+      background-color: #007BFF;
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .button-container {
+      margin-top: 20px;
+    }
+
+    .input-field {
+      margin-bottom: 10px;
+      padding: 5px;
+      width: 100%;
+    }
+
+    .logout-button {
+      background-color: #FF5733;
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <a href="../index.html">← Volver al panel</a>
+
+  <div id="container">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <h3>Gestión de Sedes y Dependencias</h3>
+      <button class="collapsible">Gestión de Sedes</button>
+      <div class="content">
+        <button class="add-button" onclick="mostrarSedes()">Mostrar Sedes</button>
+        <button class="add-button" onclick="agregarSede()">Agregar Nueva Sede</button>
+      </div>
+      <button class="collapsible">Gestión de Dependencias</button>
+      <div class="content">
+        <button class="add-button" onclick="mostrarDependencias()">Mostrar Dependencias</button>
+        <button class="add-button" onclick="agregarDependencia()">Agregar Nueva Dependencia</button>
+      </div>
+      <button class="logout-button" onclick="logout()">Cerrar sesión</button>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+      <h2>Bienvenido al Sistema de Gestión de Sedes y Dependencias</h2>
+      <p>Seleccione una opción del menú lateral.</p>
+    </div>
+  </div>
+
+  <script>
+    // Lógica para gestionar las sedes y dependencias
+    const sedes = JSON.parse(localStorage.getItem('sedes')) || [];
+    const dependencias = JSON.parse(localStorage.getItem('dependencias')) || [];
+
+    // Mostrar sedes
+    function mostrarSedes() {
+      const mainContent = document.getElementById('mainContent');
+      mainContent.innerHTML = `
+        <h2>Sedes</h2>
+        <ul id="sedes-list">
+          ${sedes.map(sede => `<li>${sede.nombre} - Dirección: ${sede.direccion} <button onclick="editarSede('${sede.id}')">Editar</button> <button onclick="eliminarSede('${sede.id}')">Eliminar</button></li>`).join('')}
+        </ul>
+        <button class="add-button" onclick="agregarSede()">Agregar Nueva Sede</button>
+      `;
+    }
+
+    // Agregar una nueva sede
+    function agregarSede() {
+      const nombre = prompt("Ingrese el nombre de la sede:");
+      const direccion = prompt("Ingrese la dirección de la sede:");
+
+      const sede = {
+        id: Date.now().toString(), // Usamos la fecha como ID único
+        nombre,
+        direccion,
+        dependencias: [] // Inicialmente no tiene dependencias asociadas
+      };
+
+      sedes.push(sede);
+      localStorage.setItem('sedes', JSON.stringify(sedes)); // Guardar en localStorage
+      mostrarSedes(); // Actualizar la lista de sedes
+    }
+
+    // Editar una sede
+    function editarSede(id) {
+      const sede = sedes.find(s => s.id === id);
+      if (sede) {
+        const nombre = prompt("Editar nombre de la sede:", sede.nombre);
+        const direccion = prompt("Editar dirección de la sede:", sede.direccion);
+
+        sede.nombre = nombre;
+        sede.direccion = direccion;
+
+        localStorage.setItem('sedes', JSON.stringify(sedes)); // Guardar los cambios en localStorage
+        mostrarSedes(); // Actualizar la lista
+      }
+    }
+
+    // Eliminar una sede
+    function eliminarSede(id) {
+      const confirmacion = confirm("¿Estás seguro de eliminar esta sede?");
+      if (confirmacion) {
+        const index = sedes.findIndex(s => s.id === id);
+        if (index !== -1) {
+          sedes.splice(index, 1); // Eliminar la sede del arreglo
+          localStorage.setItem('sedes', JSON.stringify(sedes)); // Actualizar en localStorage
+          mostrarSedes(); // Actualizar la lista
+        }
+      }
+    }
+
+    // Mostrar dependencias
+    function mostrarDependencias() {
+      const mainContent = document.getElementById('mainContent');
+      mainContent.innerHTML = `
+        <h2>Dependencias</h2>
+        <ul id="dependencias-list">
+          ${dependencias.map(dep => `<li>${dep.nombre} - Sede: ${dep.sede_nombre} <button onclick="editarDependencia('${dep.id}')">Editar</button> <button onclick="eliminarDependencia('${dep.id}')">Eliminar</button></li>`).join('')}
+        </ul>
+        <button class="add-button" onclick="agregarDependencia()">Agregar Nueva Dependencia</button>
+      `;
+    }
+
+    // Agregar una nueva dependencia
+    function agregarDependencia() {
+      const nombre = prompt("Ingrese el nombre de la dependencia:");
+      const sede_id = prompt("Ingrese la sede a la que pertenece:");
+      const sede = sedes.find(s => s.id === sede_id);
+
+      if (sede) {
+        const dependencia = {
+          id: Date.now().toString(), // Usamos la fecha como ID único
+          nombre,
+          sede_id: sede.id,
+          sede_nombre: sede.nombre,
+          usuarios: [] // Inicialmente no tiene usuarios asignados
+        };
+
+        dependencias.push(dependencia);
+        localStorage.setItem('dependencias', JSON.stringify(dependencias)); // Guardar en localStorage
+        mostrarDependencias(); // Actualizar la lista de dependencias
+      } else {
+        alert("Sede no encontrada.");
+      }
+    }
+
+    // Editar una dependencia
+    function editarDependencia(id) {
+      const dependencia = dependencias.find(dep => dep.id === id);
+      if (dependencia) {
+        const nombre = prompt("Editar nombre de la dependencia:", dependencia.nombre);
+        dependencia.nombre = nombre;
+
+        localStorage.setItem('dependencias', JSON.stringify(dependencias)); // Guardar los cambios en localStorage
+        mostrarDependencias(); // Actualizar la lista
+      }
+    }
+
+    // Eliminar una dependencia
+    function eliminarDependencia(id) {
+      const confirmacion = confirm("¿Estás seguro de eliminar esta dependencia?");
+      if (confirmacion) {
+        const index = dependencias.findIndex(dep => dep.id === id);
+        if (index !== -1) {
+          dependencias.splice(index, 1); // Eliminar la dependencia del arreglo
+          localStorage.setItem('dependencias', JSON.stringify(dependencias)); // Actualizar en localStorage
+          mostrarDependencias(); // Actualizar la lista
+        }
+      }
+    }
+
+    // Logout
+    function logout() {
+      localStorage.removeItem('usuario_autenticado');
+      alert("Has cerrado sesión.");
+      window.location.reload();
+    }
+
+    // Cargar sedes y dependencias al iniciar
+    window.onload = function() {
+      mostrarSedes(); // Cargar sedes desde localStorage al cargar la página
+    };
+  </script>
+  <script type="module" src="../scripts/control_acceso.js"></script>
+  <script>
+    document.getElementById('btnLogout')?.addEventListener('click', () => {
+      localStorage.removeItem('usuario_autenticado');
+      localStorage.removeItem('session_expires');
+      location.href = 'login.html';
+    });
+  </script>
+
+</body>
+</html>
