@@ -4,256 +4,143 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestión de Sedes y Dependencias</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 0;
-    }
-
-    #container {
-      display: flex;
-      width: 100%;
-      height: 100vh;
-    }
-
-    #sidebar {
-      width: 250px;
-      background-color: #333;
-      color: white;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-
-    #sidebar h3 {
-      margin-top: 0;
-      font-size: 18px;
-    }
-
-    .collapsible {
-      cursor: pointer;
-      margin: 10px 0;
-      padding: 10px;
-      background-color: #444;
-      color: white;
-      border: none;
-      width: 100%;
-      text-align: left;
-      font-size: 16px;
-    }
-
-    .content {
-      margin-left: 20px;
-      display: none;
-      padding: 10px;
-      background-color: #555;
-    }
-
-    #mainContent {
-      flex-grow: 1;
-      padding: 20px;
-      background-color: #fff;
-      overflow-y: auto;
-    }
-
-    .add-button {
-      background-color: #007BFF;
-      color: white;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .button-container {
-      margin-top: 20px;
-    }
-
-    .input-field {
-      margin-bottom: 10px;
-      padding: 5px;
-      width: 100%;
-    }
-
-    .logout-button {
-      background-color: #FF5733;
-      color: white;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-  </style>
+  <link rel="stylesheet" href="../styles/theme.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body>
-  <a href="../index.html">← Volver al panel</a>
 
-  <div id="container">
-    <!-- Sidebar -->
-    <div id="sidebar">
-      <h3>Gestión de Sedes y Dependencias</h3>
-      <button class="collapsible">Gestión de Sedes</button>
-      <div class="content">
-        <button class="add-button" onclick="mostrarSedes()">Mostrar Sedes</button>
-        <button class="add-button" onclick="agregarSede()">Agregar Nueva Sede</button>
-      </div>
-      <button class="collapsible">Gestión de Dependencias</button>
-      <div class="content">
-        <button class="add-button" onclick="mostrarDependencias()">Mostrar Dependencias</button>
-        <button class="add-button" onclick="agregarDependencia()">Agregar Nueva Dependencia</button>
-      </div>
-      <button class="logout-button" onclick="logout()">Cerrar sesión</button>
-    </div>
+  <header>
+    <h1>DataNet Inventario</h1>
+    <div id="userInfo"></div>
+  </header>
 
-    <!-- Main Content -->
-    <div id="mainContent">
-      <h2>Bienvenido al Sistema de Gestión de Sedes y Dependencias</h2>
-      <p>Seleccione una opción del menú lateral.</p>
-    </div>
+  <div class="sidebar">
+    <a href="../../index.html"><i class="ph-fill ph-house"></i> Inicio</a>
+    <a href="equipos.html"><i class="ph-fill ph-desktop"></i> Gestión de Equipos</a>
+    <a href="usuarios.html"><i class="ph-fill ph-users"></i> Gestión de Usuarios</a>
+    <a href="licencias.html"><i class="ph-fill ph-file-text"></i> Gestión de Licencias</a>
+    <a href="sedes_dependencias.html" class="active"><i class="ph-fill ph-buildings"></i> Sedes y Dependencias</a>
+    <a href="movimientos.html"><i class="ph-fill ph-arrows-left-right"></i> Movimientos</a>
+    <a href="auditoria.html"><i class="ph-fill ph-list-checks"></i> Auditoría</a>
+    <a href="notificaciones.html"><i class="ph-fill ph-bell"></i> Notificaciones</a>
+    <button class="logout-button" id="btnLogout"><i class="ph-fill ph-sign-out"></i> Cerrar sesión</button>
   </div>
 
-  <script>
-    // Lógica para gestionar las sedes y dependencias
-    const sedes = JSON.parse(localStorage.getItem('sedes')) || [];
-    const dependencias = JSON.parse(localStorage.getItem('dependencias')) || [];
+  <main>
+    <h1>Gestión de Sedes y Dependencias</h1>
+    <div style="display: flex; gap: 20px;">
+        <div class="card" style="flex: 1;">
+          <h2>Crear Sede</h2>
+          <select id="selEmpresaSede"></select>
+          <input id="txtSedeNombre" placeholder="Nombre de la sede" />
+          <input id="txtSedeDireccion" placeholder="Dirección" />
+          <button id="btnCrearSede" class="btn btn-primary">Crear Sede</button>
+        </div>
 
-    // Mostrar sedes
-    function mostrarSedes() {
-      const mainContent = document.getElementById('mainContent');
-      mainContent.innerHTML = `
-        <h2>Sedes</h2>
-        <ul id="sedes-list">
-          ${sedes.map(sede => `<li>${sede.nombre} - Dirección: ${sede.direccion} <button onclick="editarSede('${sede.id}')">Editar</button> <button onclick="eliminarSede('${sede.id}')">Eliminar</button></li>`).join('')}
-        </ul>
-        <button class="add-button" onclick="agregarSede()">Agregar Nueva Sede</button>
-      `;
+        <div class="card" style="flex: 1;">
+          <h2>Crear Dependencia</h2>
+          <select id="selEmpresaDep"></select>
+          <select id="selSedeDep"></select>
+          <input id="txtDepNombre" placeholder="Nombre de la dependencia" />
+          <button id="btnCrearDep" class="btn btn-primary">Crear Dependencia</button>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Listados</h2>
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 1;">
+                <h3>Sedes</h3>
+                <ul id="sedes-list"></ul>
+            </div>
+            <div style="flex: 1;">
+                <h3>Dependencias</h3>
+                <ul id="dependencias-list"></ul>
+            </div>
+        </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { getDB } from "../scripts/storage.js";
+    import { createEmpresa, createSede, createDependencia } from "../scripts/domain.js";
+
+    const selEmpresaSede = document.getElementById('selEmpresaSede');
+    const selEmpresaDep = document.getElementById('selEmpresaDep');
+    const selSedeDep = document.getElementById('selSedeDep');
+    const sedesList = document.getElementById('sedes-list');
+    const dependenciasList = document.getElementById('dependencias-list');
+
+    function loadEmpresas() {
+      const db = getDB();
+      const empresasOptions = db.empresas.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+      selEmpresaSede.innerHTML = empresasOptions;
+      selEmpresaDep.innerHTML = empresasOptions;
+      loadSedes();
     }
 
-    // Agregar una nueva sede
-    function agregarSede() {
-      const nombre = prompt("Ingrese el nombre de la sede:");
-      const direccion = prompt("Ingrese la dirección de la sede:");
-
-      const sede = {
-        id: Date.now().toString(), // Usamos la fecha como ID único
-        nombre,
-        direccion,
-        dependencias: [] // Inicialmente no tiene dependencias asociadas
-      };
-
-      sedes.push(sede);
-      localStorage.setItem('sedes', JSON.stringify(sedes)); // Guardar en localStorage
-      mostrarSedes(); // Actualizar la lista de sedes
+    function loadSedes() {
+      const db = getDB();
+      const empId = selEmpresaDep.value;
+      const sedes = db.sedes.filter(s => s.empresa_id === empId);
+      selSedeDep.innerHTML = sedes.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+      
+      sedesList.innerHTML = db.sedes.map(s => `<li>${s.nombre} (${db.empresas.find(e=>e.id===s.empresa_id)?.nombre})</li>`).join('');
+      loadDependencias();
     }
 
-    // Editar una sede
-    function editarSede(id) {
-      const sede = sedes.find(s => s.id === id);
-      if (sede) {
-        const nombre = prompt("Editar nombre de la sede:", sede.nombre);
-        const direccion = prompt("Editar dirección de la sede:", sede.direccion);
-
-        sede.nombre = nombre;
-        sede.direccion = direccion;
-
-        localStorage.setItem('sedes', JSON.stringify(sedes)); // Guardar los cambios en localStorage
-        mostrarSedes(); // Actualizar la lista
-      }
+    function loadDependencias() {
+        const db = getDB();
+        const sedeId = selSedeDep.value;
+        const dependencias = db.dependencias.filter(d => d.sede_id === sedeId);
+        dependenciasList.innerHTML = dependencias.map(d => `<li>${d.nombre} (${db.sedes.find(s=>s.id===d.sede_id)?.nombre})</li>`).join('');
     }
 
-    // Eliminar una sede
-    function eliminarSede(id) {
-      const confirmacion = confirm("¿Estás seguro de eliminar esta sede?");
-      if (confirmacion) {
-        const index = sedes.findIndex(s => s.id === id);
-        if (index !== -1) {
-          sedes.splice(index, 1); // Eliminar la sede del arreglo
-          localStorage.setItem('sedes', JSON.stringify(sedes)); // Actualizar en localStorage
-          mostrarSedes(); // Actualizar la lista
-        }
-      }
-    }
+    selEmpresaDep.onchange = loadSedes;
+    selSedeDep.onchange = loadDependencias;
 
-    // Mostrar dependencias
-    function mostrarDependencias() {
-      const mainContent = document.getElementById('mainContent');
-      mainContent.innerHTML = `
-        <h2>Dependencias</h2>
-        <ul id="dependencias-list">
-          ${dependencias.map(dep => `<li>${dep.nombre} - Sede: ${dep.sede_nombre} <button onclick="editarDependencia('${dep.id}')">Editar</button> <button onclick="eliminarDependencia('${dep.id}')">Eliminar</button></li>`).join('')}
-        </ul>
-        <button class="add-button" onclick="agregarDependencia()">Agregar Nueva Dependencia</button>
-      `;
-    }
-
-    // Agregar una nueva dependencia
-    function agregarDependencia() {
-      const nombre = prompt("Ingrese el nombre de la dependencia:");
-      const sede_id = prompt("Ingrese la sede a la que pertenece:");
-      const sede = sedes.find(s => s.id === sede_id);
-
-      if (sede) {
-        const dependencia = {
-          id: Date.now().toString(), // Usamos la fecha como ID único
-          nombre,
-          sede_id: sede.id,
-          sede_nombre: sede.nombre,
-          usuarios: [] // Inicialmente no tiene usuarios asignados
-        };
-
-        dependencias.push(dependencia);
-        localStorage.setItem('dependencias', JSON.stringify(dependencias)); // Guardar en localStorage
-        mostrarDependencias(); // Actualizar la lista de dependencias
+    document.getElementById('btnCrearSede').onclick = () => {
+      const nombre = document.getElementById('txtSedeNombre').value.trim();
+      const direccion = document.getElementById('txtSedeDireccion').value.trim();
+      const empresa_id = selEmpresaSede.value;
+      if (nombre && empresa_id) {
+        createSede(empresa_id, nombre, direccion);
+        alert("Sede creada");
+        loadSedes();
       } else {
-        alert("Sede no encontrada.");
+        alert("Por favor, seleccione una empresa y ingrese un nombre para la sede.");
       }
-    }
-
-    // Editar una dependencia
-    function editarDependencia(id) {
-      const dependencia = dependencias.find(dep => dep.id === id);
-      if (dependencia) {
-        const nombre = prompt("Editar nombre de la dependencia:", dependencia.nombre);
-        dependencia.nombre = nombre;
-
-        localStorage.setItem('dependencias', JSON.stringify(dependencias)); // Guardar los cambios en localStorage
-        mostrarDependencias(); // Actualizar la lista
-      }
-    }
-
-    // Eliminar una dependencia
-    function eliminarDependencia(id) {
-      const confirmacion = confirm("¿Estás seguro de eliminar esta dependencia?");
-      if (confirmacion) {
-        const index = dependencias.findIndex(dep => dep.id === id);
-        if (index !== -1) {
-          dependencias.splice(index, 1); // Eliminar la dependencia del arreglo
-          localStorage.setItem('dependencias', JSON.stringify(dependencias)); // Actualizar en localStorage
-          mostrarDependencias(); // Actualizar la lista
-        }
-      }
-    }
-
-    // Logout
-    function logout() {
-      localStorage.removeItem('usuario_autenticado');
-      alert("Has cerrado sesión.");
-      window.location.reload();
-    }
-
-    // Cargar sedes y dependencias al iniciar
-    window.onload = function() {
-      mostrarSedes(); // Cargar sedes desde localStorage al cargar la página
     };
-  </script>
-  <script type="module" src="../scripts/control_acceso.js"></script>
-  <script>
+
+    document.getElementById('btnCrearDep').onclick = () => {
+      const nombre = document.getElementById('txtDepNombre').value.trim();
+      const sede_id = selSedeDep.value;
+      if (nombre && sede_id) {
+        createDependencia(sede_id, nombre);
+        alert("Dependencia creada");
+        loadDependencias();
+      } else {
+        alert("Por favor, seleccione una sede y ingrese un nombre para la dependencia.");
+      }
+    };
+
+    // Carga inicial
+    const db = getDB();
+    if (db.empresas.length === 0) {
+        createEmpresa("Empresa Demo");
+    }
+    loadEmpresas();
+    
+    // Auth
+    const usuarioAutenticado = JSON.parse(localStorage.getItem('usuario_autenticado'));
+    if (usuarioAutenticado) {
+        document.getElementById('userInfo').innerText = `Conectado como: ${usuarioAutenticado.nombre}`;
+    }
     document.getElementById('btnLogout')?.addEventListener('click', () => {
       localStorage.removeItem('usuario_autenticado');
       localStorage.removeItem('session_expires');
-      location.href = 'login.html';
+      location.href = '../../login.html';
     });
   </script>
-
 </body>
 </html>

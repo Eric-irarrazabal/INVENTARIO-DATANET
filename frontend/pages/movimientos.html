@@ -3,184 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestión de Movimientos y Asignaciones</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 0;
-    }
-
-    #container {
-      display: flex;
-      width: 100%;
-      height: 100vh;
-    }
-
-    #sidebar {
-      width: 250px;
-      background-color: #333;
-      color: white;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-
-    #sidebar h3 {
-      margin-top: 0;
-      font-size: 18px;
-    }
-
-    .collapsible {
-      cursor: pointer;
-      margin: 10px 0;
-      padding: 10px;
-      background-color: #444;
-      color: white;
-      border: none;
-      width: 100%;
-      text-align: left;
-      font-size: 16px;
-    }
-
-    .content {
-      margin-left: 20px;
-      display: none;
-      padding: 10px;
-      background-color: #555;
-    }
-
-    #mainContent {
-      flex-grow: 1;
-      padding: 20px;
-      background-color: #fff;
-      overflow-y: auto;
-    }
-
-    .add-button {
-      background-color: #007BFF;
-      color: white;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .button-container {
-      margin-top: 20px;
-    }
-
-    .input-field {
-      margin-bottom: 10px;
-      padding: 5px;
-      width: 100%;
-    }
-
-    .logout-button {
-      background-color: #FF5733;
-      color: white;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-  </style>
+  <title>Historial de Movimientos</title>
+  <link rel="stylesheet" href="../styles/theme.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body>
-  <a href="../index.html">← Volver al panel</a>
 
-  <div id="container">
-    <!-- Sidebar -->
-    <div id="sidebar">
-      <h3>Gestión de Movimientos y Asignaciones</h3>
-      <button class="collapsible">Gestión de Movimientos</button>
-      <div class="content">
-        <button class="add-button" onclick="mostrarMovimientos()">Mostrar Movimientos</button>
-        <button class="add-button" onclick="registrarMovimiento()">Registrar Nuevo Movimiento</button>
-      </div>
-      <button class="logout-button" onclick="logout()">Cerrar sesión</button>
-    </div>
+  <header>
+    <h1>DataNet Inventario</h1>
+    <div id="userInfo"></div>
+  </header>
 
-    <!-- Main Content -->
-    <div id="mainContent">
-      <h2>Bienvenido al Sistema de Gestión de Movimientos</h2>
-      <p>Seleccione una opción del menú lateral.</p>
-    </div>
+  <div class="sidebar">
+    <a href="../../index.html"><i class="ph-fill ph-house"></i> Inicio</a>
+    <a href="equipos.html"><i class="ph-fill ph-desktop"></i> Gestión de Equipos</a>
+    <a href="usuarios.html"><i class="ph-fill ph-users"></i> Gestión de Usuarios</a>
+    <a href="licencias.html"><i class="ph-fill ph-file-text"></i> Gestión de Licencias</a>
+    <a href="sedes_dependencias.html"><i class="ph-fill ph-buildings"></i> Sedes y Dependencias</a>
+    <a href="movimientos.html" class="active"><i class="ph-fill ph-arrows-left-right"></i> Movimientos</a>
+    <a href="auditoria.html"><i class="ph-fill ph-list-checks"></i> Auditoría</a>
+    <a href="notificaciones.html"><i class="ph-fill ph-bell"></i> Notificaciones</a>
+    <button class="logout-button" id="btnLogout"><i class="ph-fill ph-sign-out"></i> Cerrar sesión</button>
   </div>
 
-  <script>
-    // Lógica para gestionar los movimientos de equipos
-    const movimientos = JSON.parse(localStorage.getItem('movimientos')) || [];
-    const equipos = JSON.parse(localStorage.getItem('equipos')) || [];
+  <main>
+    <h1>Historial de Movimientos</h1>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Activo</th>
+            <th>Origen</th>
+            <th>Destino</th>
+          </tr>
+        </thead>
+        <tbody id="movimientos-list">
+        </tbody>
+      </table>
+    </div>
+  </main>
 
-    // Mostrar movimientos
-    function mostrarMovimientos() {
-      const mainContent = document.getElementById('mainContent');
-      mainContent.innerHTML = `
-        <h2>Historial de Movimientos</h2>
-        <ul id="movimientos-list">
-          ${movimientos.map(mov => `
-            <li>
-              <strong>${mov.fecha}</strong> - Movimiento: ${mov.accion} - Equipo: ${mov.activo_id} 
-              <br>Origen: ${mov.origen} - Destino: ${mov.destino} <br>Usuario: ${mov.usuario}
-            </li>`).join('')}
-        </ul>
-        <button class="add-button" onclick="registrarMovimiento()">Registrar Nuevo Movimiento</button>
-      `;
-    }
+  <script type="module">
+    import { getDB } from "../scripts/storage.js";
 
-    // Registrar un nuevo movimiento
-    function registrarMovimiento() {
-      const equipo_id = prompt("Ingrese el ID del equipo a mover:");
-      const equipo = equipos.find(eq => eq.id === equipo_id);
+    const movimientosList = document.getElementById('movimientos-list');
 
-      if (equipo) {
-        const origen = prompt("Ingrese el origen (bodega, dependencia, sede, usuario):");
-        const destino = prompt("Ingrese el destino (bodega, dependencia, sede, usuario):");
-
-        const movimiento = {
-          id: Date.now().toString(), // Usamos la fecha como ID único
-          activo_id: equipo.id,
-          accion: "Traslado",
-          origen,
-          destino,
-          fecha: new Date().toLocaleString(),
-          usuario: JSON.parse(localStorage.getItem('usuario_autenticado')).nombre // Usuario actual
-        };
-
-        // Registrar movimiento
-        movimientos.push(movimiento);
-        localStorage.setItem('movimientos', JSON.stringify(movimientos)); // Guardar en localStorage
-
-        // Asignar el equipo al nuevo destino (actualización simple)
-        equipo.estado = destino; // Actualizar el estado del equipo (puede ser bodega, dependencia, etc.)
-        localStorage.setItem('equipos', JSON.stringify(equipos)); // Guardar los cambios en el equipo
-
-        mostrarMovimientos(); // Actualizar la lista de movimientos
-      } else {
-        alert("Equipo no encontrado.");
+    function renderMovimientos() {
+      const db = getDB();
+      
+      const getName = (type, id) => {
+        if (!id) return 'N/A';
+        const item = db[type].find(i => i.id === id);
+        return item ? item.nombre : 'Desconocido';
       }
+
+      movimientosList.innerHTML = db.movimientos.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).map(m => {
+        const activo = db.activos.find(a => a.id === m.activo_id);
+        const activoDesc = activo ? `${activo.marca} ${activo.modelo}` : 'Activo Desconocido';
+        
+        const origenSede = getName('sedes', m.origen.sede_id);
+        const origenDep = getName('dependencias', m.origen.dependencia_id);
+        const origenUsr = getName('usuarios', m.origen.usuario_id);
+        const origenDesc = `${origenSede} › ${origenDep} › ${origenUsr}`;
+
+        const destinoSede = getName('sedes', m.destino.sede_id);
+        const destinoDep = getName('dependencias', m.destino.dependencia_id);
+        const destinoUsr = getName('usuarios', m.destino.usuario_id);
+        const destinoDesc = `${destinoSede} › ${destinoDep} › ${destinoUsr}`;
+
+        return `<tr>
+          <td>${new Date(m.fecha).toLocaleString()}</td>
+          <td>${activoDesc}</td>
+          <td>${origenDesc}</td>
+          <td>${destinoDesc}</td>
+        </tr>`;
+      }).join('');
     }
 
-    // Logout
-    function logout() {
-      localStorage.removeItem('usuario_autenticado');
-      alert("Has cerrado sesión.");
-      window.location.reload();
-    }
+    renderMovimientos();
 
-    // Cargar movimientos al iniciar
-    window.onload = function() {
-      mostrarMovimientos(); // Cargar movimientos desde localStorage al cargar la página
-    };
-  </script>
-  <script type="module" src="../scripts/control_acceso.js"></script>
-  <script>
+    // Auth
+    const usuarioAutenticado = JSON.parse(localStorage.getItem('usuario_autenticado'));
+    if (usuarioAutenticado) {
+        document.getElementById('userInfo').innerText = `Conectado como: ${usuarioAutenticado.nombre}`;
+    }
     document.getElementById('btnLogout')?.addEventListener('click', () => {
       localStorage.removeItem('usuario_autenticado');
       localStorage.removeItem('session_expires');
-      location.href = 'login.html';
+      location.href = '../../login.html';
     });
   </script>
-
 </body>
 </html>

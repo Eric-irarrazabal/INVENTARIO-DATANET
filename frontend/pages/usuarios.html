@@ -4,206 +4,138 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestión de Usuarios</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 0;
-    }
-
-    #container {
-      display: flex;
-      width: 100%;
-      height: 100vh;
-    }
-
-    #sidebar {
-      width: 250px;
-      background-color: #333;
-      color: white;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-
-    #sidebar h3 {
-      margin-top: 0;
-      font-size: 18px;
-    }
-
-    .collapsible {
-      cursor: pointer;
-      margin: 10px 0;
-      padding: 10px;
-      background-color: #444;
-      color: white;
-      border: none;
-      width: 100%;
-      text-align: left;
-      font-size: 16px;
-    }
-
-    .content {
-      margin-left: 20px;
-      display: none;
-      padding: 10px;
-      background-color: #555;
-    }
-
-    #mainContent {
-      flex-grow: 1;
-      padding: 20px;
-      background-color: #fff;
-      overflow-y: auto;
-    }
-
-    .add-button {
-      background-color: #007BFF;
-      color: white;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .button-container {
-      margin-top: 20px;
-    }
-
-    .input-field {
-      margin-bottom: 10px;
-      padding: 5px;
-      width: 100%;
-    }
-
-    .logout-button {
-      background-color: #FF5733;
-      color: white;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-  </style>
+  <link rel="stylesheet" href="../styles/theme.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body>
-  <a href="../index.html">← Volver al panel</a>
 
-  <div id="container">
-    <!-- Sidebar -->
-    <div id="sidebar">
-      <h3>Gestión de Usuarios</h3>
-      <button class="collapsible">Gestión de Usuarios</button>
-      <div class="content">
-        <button class="add-button" onclick="mostrarUsuarios()">Mostrar Usuarios</button>
-        <button class="add-button" onclick="agregarUsuario()">Agregar Nuevo Usuario</button>
-      </div>
-      <button class="logout-button" onclick="logout()">Cerrar sesión</button>
-    </div>
+  <header>
+    <h1>DataNet Inventario</h1>
+    <div id="userInfo"></div>
+  </header>
 
-    <!-- Main Content -->
-    <div id="mainContent">
-      <h2>Bienvenido al Sistema de Gestión de Usuarios</h2>
-      <p>Seleccione una opción del menú lateral.</p>
-    </div>
+  <div class="sidebar">
+    <a href="../../index.html"><i class="ph-fill ph-house"></i> Inicio</a>
+    <a href="equipos.html"><i class="ph-fill ph-desktop"></i> Gestión de Equipos</a>
+    <a href="usuarios.html" class="active"><i class="ph-fill ph-users"></i> Gestión de Usuarios</a>
+    <a href="licencias.html"><i class="ph-fill ph-file-text"></i> Gestión de Licencias</a>
+    <a href="sedes_dependencias.html"><i class="ph-fill ph-buildings"></i> Sedes y Dependencias</a>
+    <a href="movimientos.html"><i class="ph-fill ph-arrows-left-right"></i> Movimientos</a>
+    <a href="auditoria.html"><i class="ph-fill ph-list-checks"></i> Auditoría</a>
+    <a href="notificaciones.html"><i class="ph-fill ph-bell"></i> Notificaciones</a>
+    <button class="logout-button" id="btnLogout"><i class="ph-fill ph-sign-out"></i> Cerrar sesión</button>
   </div>
 
-  <script>
-    // Lógica para gestionar los usuarios
-    const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+  <main>
+    <h1>Gestión de Usuarios</h1>
+    <div style="display: flex; gap: 20px;">
+        <div class="card" style="flex: 1;">
+          <h2>Crear Usuario</h2>
+          <select id="selEmpresa"></select>
+          <select id="selSede"></select>
+          <select id="selDep"></select>
+          <input id="txtNombre" placeholder="Nombre" />
+          <input id="txtCorreo" placeholder="Correo" />
+          <input id="txtTelefono" placeholder="Teléfono" />
+          <input id="txtCargo" placeholder="Cargo" />
+          <button id="btnCrearUsuario" class="btn btn-primary">Crear Usuario</button>
+        </div>
 
-    // Mostrar usuarios
-    function mostrarUsuarios() {
-      const mainContent = document.getElementById('mainContent');
-      mainContent.innerHTML = `
-        <h2>Usuarios</h2>
-        <ul id="usuarios-list">
-          ${usuarios.map(usuario => `<li>${usuario.nombre} - ${usuario.cargo} - ${usuario.rol} <button onclick="editarUsuario('${usuario.id}')">Editar</button> <button onclick="eliminarUsuario('${usuario.id}')">Eliminar</button></li>`).join('')}
-        </ul>
-        <button class="add-button" onclick="agregarUsuario()">Agregar Nuevo Usuario</button>
-      `;
+        <div class="card" style="flex: 2;">
+          <h2>Usuarios</h2>
+          <table id="usuarios-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Cargo</th>
+                <th>Dependencia</th>
+                <th>Sede</th>
+              </tr>
+            </thead>
+            <tbody id="usuarios-list">
+            </tbody>
+          </table>
+        </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { getDB } from "../scripts/storage.js";
+    import { createUsuario } from "../scripts/domain.js";
+
+    const selEmpresa = document.getElementById('selEmpresa');
+    const selSede = document.getElementById('selSede');
+    const selDep = document.getElementById('selDep');
+    const usuariosList = document.getElementById('usuarios-list');
+
+    function loadEmpresas() {
+      const db = getDB();
+      selEmpresa.innerHTML = db.empresas.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+      loadSedes();
     }
 
-    // Agregar un nuevo usuario
-    function agregarUsuario() {
-      const nombre = prompt("Ingrese el nombre del usuario:");
-      const correo = prompt("Ingrese el correo del usuario:");
-      const cargo = prompt("Ingrese el cargo del usuario:");
-      const rol = prompt("Ingrese el rol del usuario (Admin, Técnico, Usuario Cliente):");
-      const sede = prompt("Ingrese la sede del usuario:");
-      const dependencia = prompt("Ingrese la dependencia del usuario:");
-
-      const usuario = {
-        id: Date.now().toString(), // Usamos la fecha como ID único
-        nombre,
-        correo,
-        cargo,
-        rol,
-        sede,
-        dependencia,
-        equipos_asignados: [] // Inicialmente no tiene equipos asignados
-      };
-
-      usuarios.push(usuario);
-      localStorage.setItem('usuarios', JSON.stringify(usuarios)); // Guardar en localStorage
-      mostrarUsuarios(); // Actualizar la lista de usuarios
+    function loadSedes() {
+      const db = getDB();
+      const empId = selEmpresa.value;
+      const sedes = db.sedes.filter(s => s.empresa_id === empId);
+      selSede.innerHTML = sedes.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+      loadDependencias();
     }
 
-    // Editar un usuario
-    function editarUsuario(id) {
-      const usuario = usuarios.find(u => u.id === id);
-      if (usuario) {
-        const nombre = prompt("Editar nombre del usuario:", usuario.nombre);
-        const correo = prompt("Editar correo del usuario:", usuario.correo);
-        const cargo = prompt("Editar cargo del usuario:", usuario.cargo);
-        const rol = prompt("Editar rol del usuario:", usuario.rol);
-        const sede = prompt("Editar sede del usuario:", usuario.sede);
-        const dependencia = prompt("Editar dependencia del usuario:", usuario.dependencia);
+    function loadDependencias() {
+      const db = getDB();
+      const sedeId = selSede.value;
+      const dependencias = db.dependencias.filter(d => d.sede_id === sedeId);
+      selDep.innerHTML = dependencias.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('');
+      loadUsuarios();
+    }
+    
+    function loadUsuarios() {
+        const db = getDB();
+        usuariosList.innerHTML = db.usuarios.map(u => {
+            const dep = db.dependencias.find(d => d.id === u.dependencia_id);
+            const sede = dep ? db.sedes.find(s => s.id === dep.sede_id) : null;
+            return `<tr>
+                        <td>${u.nombre}</td>
+                        <td>${u.cargo}</td>
+                        <td>${dep?.nombre || 'N/A'}</td>
+                        <td>${sede?.nombre || 'N/A'}</td>
+                    </tr>`;
+        }).join('');
+    }
 
-        usuario.nombre = nombre;
-        usuario.correo = correo;
-        usuario.cargo = cargo;
-        usuario.rol = rol;
-        usuario.sede = sede;
-        usuario.dependencia = dependencia;
+    selEmpresa.onchange = loadSedes;
+    selSede.onchange = loadDependencias;
 
-        localStorage.setItem('usuarios', JSON.stringify(usuarios)); // Guardar los cambios en localStorage
-        mostrarUsuarios(); // Actualizar la lista
+    document.getElementById('btnCrearUsuario').onclick = () => {
+      const dependencia_id = selDep.value;
+      const nombre = document.getElementById('txtNombre').value.trim();
+      const correo = document.getElementById('txtCorreo').value.trim();
+      const telefono = document.getElementById('txtTelefono').value.trim();
+      const cargo = document.getElementById('txtCargo').value.trim();
+      
+      if (dependencia_id && nombre) {
+        createUsuario(dependencia_id, { nombre, correo, telefono, cargo });
+        alert("Usuario creado");
+        loadUsuarios();
+      } else {
+        alert("Por favor, complete todos los campos.");
       }
-    }
-
-    // Eliminar un usuario
-    function eliminarUsuario(id) {
-      const confirmacion = confirm("¿Estás seguro de eliminar este usuario?");
-      if (confirmacion) {
-        const index = usuarios.findIndex(u => u.id === id);
-        if (index !== -1) {
-          usuarios.splice(index, 1); // Eliminar el usuario del arreglo
-          localStorage.setItem('usuarios', JSON.stringify(usuarios)); // Actualizar en localStorage
-          mostrarUsuarios(); // Actualizar la lista
-        }
-      }
-    }
-
-    // Logout
-    function logout() {
-      localStorage.removeItem('usuario_autenticado');
-      alert("Has cerrado sesión.");
-      window.location.reload();
-    }
-
-    // Cargar usuarios al iniciar
-    window.onload = function() {
-      mostrarUsuarios(); // Cargar usuarios desde localStorage al cargar la página
     };
-  </script>
-  <script type="module" src="../scripts/control_acceso.js"></script>
-  <script>
+
+    // Carga inicial
+    loadEmpresas();
+
+    // Auth
+    const usuarioAutenticado = JSON.parse(localStorage.getItem('usuario_autenticado'));
+    if (usuarioAutenticado) {
+        document.getElementById('userInfo').innerText = `Conectado como: ${usuarioAutenticado.nombre}`;
+    }
     document.getElementById('btnLogout')?.addEventListener('click', () => {
       localStorage.removeItem('usuario_autenticado');
       localStorage.removeItem('session_expires');
-      location.href = 'login.html';
+      location.href = '../../login.html';
     });
   </script>
-
 </body>
 </html>

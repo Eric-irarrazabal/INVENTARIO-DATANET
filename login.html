@@ -1,41 +1,61 @@
-<!-- login.html (en la misma raíz donde está index.html) -->
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="public-page" content="true" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Iniciar sesión</title>
+  <title>Iniciar sesión - Sistema de Inventario DataNet</title>
+  <link rel="stylesheet" href="frontend/styles/theme.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
-    body{font-family:system-ui;margin:0;display:grid;place-items:center;height:100vh;background:#111;color:#eee}
-    form{background:#1e1e1e;padding:24px;border-radius:12px;min-width:320px}
-    input,button{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #333;background:#222;color:#eee}
-    button{cursor:pointer}
-    .hint{font-size:.85rem;color:#bbb}
+    body {
+      display: grid;
+      place-items: center;
+      height: 100vh;
+      background-color: var(--color-light);
+    }
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      padding: 40px;
+    }
+    .login-card h1 {
+      text-align: center;
+      color: var(--color-primary);
+      margin-bottom: 30px;
+    }
+    .login-card .btn {
+        width: 100%;
+    }
   </style>
 </head>
 <body>
-  <form id="loginForm" autocomplete="off">
-    <h2>Acceso</h2>
-    <input id="email" type="email" placeholder="Correo" required />
-    <input id="pass" type="password" placeholder="Contraseña" required />
-    <button type="submit">Entrar</button>
-    <p class="hint">Demo: admin@datanet.local / admin123</p>
-  </form>
+  <div class="card login-card">
+    <h1>Acceso al Sistema</h1>
+    <form id="loginForm" autocomplete="off">
+      <input id="email" type="email" placeholder="Correo electrónico" required />
+      <input id="pass" type="password" placeholder="Contraseña" required />
+      <button type="submit" class="btn btn-primary">Entrar</button>
+      <p class="hint" style="text-align: center; margin-top: 15px; color: var(--color-text-secondary);">Demo: admin@datanet.local / admin123</p>
+    </form>
+  </div>
 
-  <script>
+  <script type="module">
+    import { getDB, saveDB, genId } from "./frontend/scripts/storage.js";
+    import { createEmpresa, createSede, createDependencia, createUsuario } from "./frontend/scripts/domain.js";
+
     // Semilla de usuarios demo (solo si no existe)
-    if (!localStorage.getItem('usuarios')) {
-      localStorage.setItem('usuarios', JSON.stringify([
-        {
-          id: 'u_admin',
-          nombre: 'Admin Demo',
-          correo: 'admin@datanet.local',
-          contrasena: 'admin123',
-          rol: 'Admin Global',
-          tenant_id: 'tenant_demo'
-        }
-      ]));
+    const db = getDB();
+    if (db.empresas.length === 0) {
+        const emp = createEmpresa("Empresa Demo");
+        const sede = createSede(emp.id, "Sede Principal");
+        const dep = createDependencia(sede.id, "Gerencia");
+        createUsuario(dep.id, {
+            nombre: 'Admin Demo',
+            correo: 'admin@datanet.local',
+            cargo: 'Administrador',
+            contrasena: 'admin123'
+        });
     }
 
     document.getElementById('loginForm').addEventListener('submit', (e) => {
@@ -43,8 +63,8 @@
       const correo = document.getElementById('email').value.trim();
       const pass = document.getElementById('pass').value.trim();
 
-      const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
-      const u = usuarios.find(x => x.correo === correo && x.contrasena === pass);
+      const db = getDB();
+      const u = db.usuarios.find(x => x.correo === correo && x.contrasena === pass);
 
       if (!u) {
         alert('Credenciales inválidas');
@@ -52,7 +72,7 @@
       }
       // guarda sesión
       localStorage.setItem('usuario_autenticado', JSON.stringify({
-        id: u.id, nombre: u.nombre, correo: u.correo, rol: u.rol, tenant_id: u.tenant_id
+        id: u.id, nombre: u.nombre, correo: u.correo, rol: u.cargo, tenant_id: u.empresa_id
       }));
 
       // opcional: TTL simple (1 día)

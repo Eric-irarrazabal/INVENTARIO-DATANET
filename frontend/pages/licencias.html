@@ -4,201 +4,126 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestión de Licencias</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 0;
-    }
-
-    #container {
-      display: flex;
-      width: 100%;
-      height: 100vh;
-    }
-
-    #sidebar {
-      width: 250px;
-      background-color: #333;
-      color: white;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-
-    #sidebar h3 {
-      margin-top: 0;
-      font-size: 18px;
-    }
-
-    .collapsible {
-      cursor: pointer;
-      margin: 10px 0;
-      padding: 10px;
-      background-color: #444;
-      color: white;
-      border: none;
-      width: 100%;
-      text-align: left;
-      font-size: 16px;
-    }
-
-    .content {
-      margin-left: 20px;
-      display: none;
-      padding: 10px;
-      background-color: #555;
-    }
-
-    #mainContent {
-      flex-grow: 1;
-      padding: 20px;
-      background-color: #fff;
-      overflow-y: auto;
-    }
-
-    .add-button {
-      background-color: #007BFF;
-      color: white;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .button-container {
-      margin-top: 20px;
-    }
-
-    .input-field {
-      margin-bottom: 10px;
-      padding: 5px;
-      width: 100%;
-    }
-
-    .logout-button {
-      background-color: #FF5733;
-      color: white;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-  </style>
+  <link rel="stylesheet" href="../styles/theme.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body>
-  <a href="../index.html">← Volver al panel</a>
 
-  <div id="container">
-    <!-- Sidebar -->
-    <div id="sidebar">
-      <h3>Gestión de Licencias</h3>
-      <button class="collapsible">Gestión de Licencias</button>
-      <div class="content">
-        <button class="add-button" onclick="mostrarLicencias()">Mostrar Licencias</button>
-        <button class="add-button" onclick="agregarLicencia()">Agregar Nueva Licencia</button>
-      </div>
-      <button class="logout-button" onclick="logout()">Cerrar sesión</button>
-    </div>
+  <header>
+    <h1>DataNet Inventario</h1>
+    <div id="userInfo"></div>
+  </header>
 
-    <!-- Main Content -->
-    <div id="mainContent">
-      <h2>Bienvenido al Sistema de Gestión de Licencias</h2>
-      <p>Seleccione una opción del menú lateral.</p>
-    </div>
+  <div class="sidebar">
+    <a href="../../index.html"><i class="ph-fill ph-house"></i> Inicio</a>
+    <a href="equipos.html"><i class="ph-fill ph-desktop"></i> Gestión de Equipos</a>
+    <a href="usuarios.html"><i class="ph-fill ph-users"></i> Gestión de Usuarios</a>
+    <a href="licencias.html" class="active"><i class="ph-fill ph-file-text"></i> Gestión de Licencias</a>
+    <a href="sedes_dependencias.html"><i class="ph-fill ph-buildings"></i> Sedes y Dependencias</a>
+    <a href="movimientos.html"><i class="ph-fill ph-arrows-left-right"></i> Movimientos</a>
+    <a href="auditoria.html"><i class="ph-fill ph-list-checks"></i> Auditoría</a>
+    <a href="notificaciones.html"><i class="ph-fill ph-bell"></i> Notificaciones</a>
+    <button class="logout-button" id="btnLogout"><i class="ph-fill ph-sign-out"></i> Cerrar sesión</button>
   </div>
 
-  <script>
-    // Lógica para gestionar las licencias
-    const licencias = JSON.parse(localStorage.getItem('licencias')) || [];
+  <main>
+    <h1>Gestión de Licencias</h1>
+    <div style="display: flex; gap: 20px;">
+        <div class="card" style="flex: 1;">
+          <h2>Agregar Licencia</h2>
+          <select id="selActivo">
+            <option value="">-- Activo Asociado (Opcional) --</option>
+          </select>
+          <input id="txtProducto" placeholder="Producto" />
+          <input id="txtProveedor" placeholder="Proveedor" />
+          <label>Fecha de Compra: <input id="dateCompra" type="date" /></label>
+          <label>Fecha de Expiración: <input id="dateExpira" type="date" /></label>
+          <button id="btnCrearLicencia" class="btn btn-primary">Agregar Licencia</button>
+        </div>
 
-    // Mostrar licencias
-    function mostrarLicencias() {
-      const mainContent = document.getElementById('mainContent');
-      mainContent.innerHTML = `
-        <h2>Licencias</h2>
-        <ul id="licencias-list">
-          ${licencias.map(licencia => `<li>${licencia.producto} - Expira: ${licencia.fecha_expira} <button onclick="editarLicencia('${licencia.id}')">Editar</button> <button onclick="eliminarLicencia('${licencia.id}')">Eliminar</button></li>`).join('')}
-        </ul>
-        <button class="add-button" onclick="agregarLicencia()">Agregar Nueva Licencia</button>
-      `;
+        <div class="card" style="flex: 2;">
+          <h2>Licencias</h2>
+          <table id="licencias-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Proveedor</th>
+                <th>Compra</th>
+                <th>Expiración</th>
+                <th>Activo Asociado</th>
+              </tr>
+            </thead>
+            <tbody id="licencias-list">
+            </tbody>
+          </table>
+        </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { getDB } from "../scripts/storage.js";
+    import { createAdjunto } from "../scripts/domain.js";
+
+    const selActivo = document.getElementById('selActivo');
+    const licenciasList = document.getElementById('licencias-list');
+
+    function loadActivos() {
+      const db = getDB();
+      selActivo.innerHTML = '<option value="">-- Activo Asociado (Opcional) --</option>' + 
+        db.activos.map(a => `<option value="${a.id}">${a.marca} ${a.modelo} (${a.nro_serie})</option>`).join('');
     }
 
-    // Agregar una nueva licencia
-    function agregarLicencia() {
-      const producto = prompt("Ingrese el producto de la licencia:");
-      const fecha_compra = prompt("Ingrese la fecha de compra (YYYY-MM-DD):");
-      const fecha_expira = prompt("Ingrese la fecha de expiración (YYYY-MM-DD):");
-      const proveedor = prompt("Ingrese el proveedor de la licencia:");
-      const activo_id = prompt("Ingrese el ID del activo asociado (opcional):");
-
-      const licencia = {
-        id: Date.now().toString(), // Usamos la fecha como ID único
-        producto,
-        fecha_compra,
-        fecha_expira,
-        proveedor,
-        activo_id
-      };
-
-      licencias.push(licencia);
-      localStorage.setItem('licencias', JSON.stringify(licencias)); // Guardar en localStorage
-      mostrarLicencias(); // Actualizar la lista de licencias
+    function renderLicencias() {
+      const db = getDB();
+      licenciasList.innerHTML = db.adjuntos.filter(adj => adj.entidad === 'activos').map(lic => {
+        const activo = db.activos.find(a => a.id === lic.entidad_id);
+        const activoDesc = activo ? `${activo.marca} ${activo.modelo}` : 'N/A';
+        return `<tr>
+          <td>${lic.producto}</td>
+          <td>${lic.proveedor}</td>
+          <td>${lic.fecha_compra}</td>
+          <td>${lic.fecha_expira}</td>
+          <td>${activoDesc}</td>
+        </tr>`;
+      }).join('');
     }
 
-    // Editar una licencia
-    function editarLicencia(id) {
-      const licencia = licencias.find(l => l.id === id);
-      if (licencia) {
-        const producto = prompt("Editar producto de la licencia:", licencia.producto);
-        const fecha_compra = prompt("Editar fecha de compra:", licencia.fecha_compra);
-        const fecha_expira = prompt("Editar fecha de expiración:", licencia.fecha_expira);
-        const proveedor = prompt("Editar proveedor de la licencia:", licencia.proveedor);
-        const activo_id = prompt("Editar ID del activo asociado:", licencia.activo_id);
+    document.getElementById('btnCrearLicencia').onclick = () => {
+      const activo_id = selActivo.value || null;
+      const producto = document.getElementById('txtProducto').value.trim();
+      const proveedor = document.getElementById('txtProveedor').value.trim();
+      const fecha_compra = document.getElementById('dateCompra').value;
+      const fecha_expira = document.getElementById('dateExpira').value;
 
-        licencia.producto = producto;
-        licencia.fecha_compra = fecha_compra;
-        licencia.fecha_expira = fecha_expira;
-        licencia.proveedor = proveedor;
-        licencia.activo_id = activo_id;
-
-        localStorage.setItem('licencias', JSON.stringify(licencias)); // Guardar los cambios en localStorage
-        mostrarLicencias(); // Actualizar la lista
+      if (producto && fecha_compra && fecha_expira) {
+        createAdjunto('activos', activo_id, {
+          nombre: `Licencia ${producto}`,
+          producto,
+          proveedor,
+          fecha_compra,
+          fecha_expira
+        });
+        alert("Licencia agregada");
+        renderLicencias();
+      } else {
+        alert("Por favor, complete todos los campos de la licencia.");
       }
-    }
-
-    // Eliminar una licencia
-    function eliminarLicencia(id) {
-      const confirmacion = confirm("¿Estás seguro de eliminar esta licencia?");
-      if (confirmacion) {
-        const index = licencias.findIndex(l => l.id === id);
-        if (index !== -1) {
-          licencias.splice(index, 1); // Eliminar la licencia del arreglo
-          localStorage.setItem('licencias', JSON.stringify(licencias)); // Actualizar en localStorage
-          mostrarLicencias(); // Actualizar la lista
-        }
-      }
-    }
-
-    // Logout
-    function logout() {
-      localStorage.removeItem('usuario_autenticado');
-      alert("Has cerrado sesión.");
-      window.location.reload();
-    }
-
-    // Cargar licencias al iniciar
-    window.onload = function() {
-      mostrarLicencias(); // Cargar licencias desde localStorage al cargar la página
     };
-  </script>
-  <script type="module" src="../scripts/control_acceso.js"></script>
-  <script>
+
+    // Carga inicial
+    loadActivos();
+    renderLicencias();
+
+    // Auth
+    const usuarioAutenticado = JSON.parse(localStorage.getItem('usuario_autenticado'));
+    if (usuarioAutenticado) {
+        document.getElementById('userInfo').innerText = `Conectado como: ${usuarioAutenticado.nombre}`;
+    }
     document.getElementById('btnLogout')?.addEventListener('click', () => {
       localStorage.removeItem('usuario_autenticado');
       localStorage.removeItem('session_expires');
-      location.href = 'login.html';
+      location.href = '../../login.html';
     });
   </script>
-
 </body>
 </html>

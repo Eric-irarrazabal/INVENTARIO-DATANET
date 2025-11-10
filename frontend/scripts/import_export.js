@@ -1,9 +1,13 @@
-function exportarEquipos() {
-  const equipos = JSON.parse(localStorage.getItem('equipos')) || [];
-  let csvContent = "Nombre,Estado,Categoría,Marca,Modelo,Número de Serie,Fecha de Alta\n";
+import { getDB, saveDB } from './storage.js';
+import { createActivo } from './domain.js';
 
-  equipos.forEach(equipo => {
-    const row = `${equipo.nombre},${equipo.estado},${equipo.categoria},${equipo.marca},${equipo.modelo},${equipo.nro_serie},${equipo.fecha_alta}`;
+function exportarEquipos() {
+  const db = getDB();
+  const activos = db.activos;
+  let csvContent = "Categoria,Estado,Marca,Modelo,Nro_Serie\n";
+
+  activos.forEach(activo => {
+    const row = `${activo.categoria},${activo.estado},${activo.marca},${activo.modelo},${activo.nro_serie}`;
     csvContent += row + "\n";
   });
 
@@ -16,10 +20,11 @@ function exportarEquipos() {
 }
 
 function exportarEquiposXLSX() {
-  const equipos = JSON.parse(localStorage.getItem('equipos')) || [];
+  const db = getDB();
+  const activos = db.activos;
   
   // Crear una hoja de trabajo
-  const ws = XLSX.utils.json_to_sheet(equipos);
+  const ws = XLSX.utils.json_to_sheet(activos);
   
   // Crear un libro de trabajo
   const wb = XLSX.utils.book_new();
@@ -38,10 +43,20 @@ function importarCSV() {
       reader.onload = function(event) {
         const csvData = event.target.result;
         const equipos = parseCSV(csvData);
-        // Validar y agregar los equipos a localStorage
-        localStorage.setItem('equipos', JSON.stringify(equipos));
+        const db = getDB();
+        const empresa_id = db.empresas[0]?.id;
+        if (!empresa_id) {
+            alert("No hay una empresa de demostración para asignar los equipos.");
+            return;
+        }
+        equipos.forEach(equipo => {
+            createActivo(empresa_id, equipo);
+        });
         alert("Equipos importados con éxito.");
-        mostrarEquipos(); // Actualizar la lista
+        // Asumiendo que hay una función para recargar los datos en la página
+        if (typeof loadFilterData === 'function') {
+            loadFilterData();
+        }
       };
       reader.readAsText(file);
     }
@@ -54,15 +69,13 @@ function parseCSV(csvData) {
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       const cols = row.split(",");
-      if (cols.length === 7) { // Validación básica
+      if (cols.length === 5) { // Adaptado al nuevo formato
         equipos.push({
-          nombre: cols[0],
+          categoria: cols[0],
           estado: cols[1],
-          categoria: cols[2],
-          marca: cols[3],
-          modelo: cols[4],
-          nro_serie: cols[5],
-          fecha_alta: cols[6]
+          marca: cols[2],
+          modelo: cols[3],
+          nro_serie: cols[4]
         });
       }
     }
@@ -81,11 +94,27 @@ function importarXLSX() {
         const ws = wb.Sheets[wb.SheetNames[0]]; // Leer la primera hoja
         const equipos = XLSX.utils.sheet_to_json(ws);
         
-        // Validar y agregar los equipos a localStorage
-        localStorage.setItem('equipos', JSON.stringify(equipos));
+        const db = getDB();
+        const empresa_id = db.empresas[0]?.id;
+        if (!empresa_id) {
+            alert("No hay una empresa de demostración para asignar los equipos.");
+            return;
+        }
+        equipos.forEach(equipo => {
+            createActivo(empresa_id, equipo);
+        });
+
         alert("Equipos importados con éxito.");
-        mostrarEquipos(); // Actualizar la lista
+        if (typeof loadFilterData === 'function') {
+            loadFilterData();
+        }
       };
       reader.readAsArrayBuffer(file);
     }
 }
+
+// Hacer las funciones accesibles globalmente si se llaman desde el HTML
+window.exportarEquipos = exportarEquipos;
+window.exportarEquiposXLSX = exportarEquiposXLSX;
+window.importarCSV = importarCSV;
+window.importarXLSX = importarXLSX;

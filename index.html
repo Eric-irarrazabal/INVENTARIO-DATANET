@@ -4,148 +4,87 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistema de Inventario - DataNet</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 0;
-    }
-
-    #container {
-      display: flex;
-      width: 100%;
-      height: 100vh;
-    }
-
-    /* Sidebar */
-    #sidebar {
-      width: 250px;
-      background-color: #333;
-      color: white;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-
-    #sidebar h3 {
-      margin-top: 0;
-      font-size: 18px;
-    }
-
-    .menu-item {
-      display: block;
-      margin: 10px 0;
-      padding: 10px;
-      background-color: #444;
-      color: white;
-      text-decoration: none;
-      font-size: 16px;
-      border-radius: 5px;
-    }
-
-    .menu-item:hover {
-      background-color: #555;
-    }
-
-    #mainContent {
-      flex-grow: 1;
-      padding: 20px;
-      background-color: #fff;
-      overflow-y: auto;
-    }
-
-    .add-button {
-      background-color: #007BFF;
-      color: white;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .logout-button {
-      background-color: #FF5733;
-      color: white;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-  </style>
+  <link rel="stylesheet" href="frontend/styles/theme.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body>
 
-  <div id="container">
-    <!-- Sidebar -->
-    <div id="sidebar">
-      <h3>Administración de Inventario</h3>
+  <header>
+    <h1>DataNet Inventario</h1>
+    <div id="userInfo"></div>
+  </header>
 
-      <a class="menu-item" href="./frontend/pages/equipos.html">Gestión de Equipos</a>
-      <a class="menu-item" href="./frontend/pages/usuarios.html">Gestión de Usuarios</a>
-      <a class="menu-item" href="./frontend/pages/licencias.html">Gestión de Licencias</a>
-      <a class="menu-item" href="./frontend/pages/sedes_dependencias.html">Sedes y Dependencias</a>
-      <a class="menu-item" href="./frontend/pages/movimientos.html">Movimientos</a>
-      <a class="menu-item" href="./frontend/pages/auditoria.html">Auditoría</a>
-      <a class="menu-item" href="./frontend/pages/notificaciones.html">Notificaciones</a>
-
-      <button class="logout-button" id="btnLogout" onclick="logout()">Cerrar sesión</button>
-    </div>
-
-    <!-- Main Content -->
-    <div id="mainContent">
-      <h2>Bienvenido al Sistema de Inventario</h2>
-      <p>Seleccione una opción del menú lateral.</p>
-    </div>
+  <div class="sidebar">
+    <a href="index.html" class="active"><i class="ph-fill ph-house"></i> Inicio</a>
+    <a href="./frontend/pages/equipos.html"><i class="ph-fill ph-desktop"></i> Gestión de Equipos</a>
+    <a href="./frontend/pages/usuarios.html"><i class="ph-fill ph-users"></i> Gestión de Usuarios</a>
+    <a href="./frontend/pages/licencias.html"><i class="ph-fill ph-file-text"></i> Gestión de Licencias</a>
+    <a href="./frontend/pages/sedes_dependencias.html"><i class="ph-fill ph-buildings"></i> Sedes y Dependencias</a>
+    <a href="./frontend/pages/movimientos.html"><i class="ph-fill ph-arrows-left-right"></i> Movimientos</a>
+    <a href="./frontend/pages/auditoria.html"><i class="ph-fill ph-list-checks"></i> Auditoría</a>
+    <a href="./frontend/pages/notificaciones.html"><i class="ph-fill ph-bell"></i> Notificaciones</a>
+    <button class="logout-button" id="btnLogout"><i class="ph-fill ph-sign-out"></i> Cerrar sesión</button>
   </div>
 
-  <script>
-    // Lógica de control de acceso (ya implementada en pasos anteriores)
-    // Simular rol de usuario
-    let usuarioAutenticado = JSON.parse(localStorage.getItem('usuario_autenticado'));
+  <main>
+    <div class="card">
+      <h2>Bienvenido al Sistema de Inventario</h2>
+      <p>Seleccione una opción del menú lateral para comenzar a gestionar sus activos.</p>
+    </div>
+    
+    <div id="dashboard-cards" style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <!-- Dashboard cards will be inserted here by script -->
+    </div>
+  </main>
 
-    // Ya no hay menú desplegable
+  <script type="module">
+    import { getDB } from "./frontend/scripts/storage.js";
+    import "./frontend/scripts/migrate.js";
 
-    // Función para mostrar equipos
-    function mostrarEquipos() {
-      const mainContent = document.getElementById('mainContent');
-      mainContent.innerHTML = `
-        <h2>Equipos</h2>
-        <ul>
-          <li>Equipo 1 - Estado: Activo</li>
-          <li>Equipo 2 - Estado: Activo</li>
-        </ul>
-        <input type="text" id="inputEquipo" placeholder="Nuevo equipo" />
-        <button class="add-button" onclick="agregarEquipo()">Agregar equipo</button>
-      `;
-    }
+    const usuarioAutenticado = JSON.parse(localStorage.getItem('usuario_autenticado'));
+    const sessionExpires = localStorage.getItem('session_expires');
 
-    // Función para agregar un equipo
-    function agregarEquipo() {
-      const nombre = document.getElementById('inputEquipo').value;
-      if (nombre) {
-        alert(`Nuevo equipo agregado: ${nombre}`);
-        // Aquí agregaríamos el equipo al localStorage
-      }
-    }
-
-    // Función de logout
-    function logout() {
+    if (!usuarioAutenticado || (sessionExpires && Date.now() > Number(sessionExpires))) {
       localStorage.removeItem('usuario_autenticado');
-      alert("Has cerrado sesión.");
-      window.location.reload();
+      localStorage.removeItem('session_expires');
+      location.href = 'login.html';
+    } else {
+      document.getElementById('userInfo').innerText = `Conectado como: ${usuarioAutenticado.nombre}`;
     }
 
-    // Verificación de roles al cargar la página
-    window.onload = function() {
-      if (!usuarioAutenticado) {
-        alert('Por favor, inicia sesión.');
-        window.location.href = 'login.html'; // Simulamos una redirección a una página de login.
-      }
-      // Lógica para ocultar/mostrar opciones según el rol del usuario
-      if (usuarioAutenticado.rol === 'Usuario Cliente') {
-        document.querySelectorAll('.add-button').forEach(button => button.disabled = true);
-      }
-    }
+    document.getElementById('btnLogout')?.addEventListener('click', () => {
+      localStorage.removeItem('usuario_autenticado');
+      localStorage.removeItem('session_expires');
+      location.href = 'login.html';
+    });
+    
+    // Dashboard cards logic
+    const db = getDB();
+    const dashboardCards = document.getElementById('dashboard-cards');
+    
+    const totalActivos = db.activos.length;
+    const licenciasPorVencer = db.adjuntos.filter(adj => {
+        if (adj.entidad === 'activos' && adj.fecha_expira) {
+          const fechaExp = new Date(adj.fecha_expira);
+          const hoy = new Date();
+          const umbral = new Date(hoy);
+          umbral.setDate(hoy.getDate() + 30);
+          return fechaExp <= umbral;
+        }
+        return false;
+      }).length;
+      
+    dashboardCards.innerHTML = `
+        <div class="card" style="flex-grow: 1;">
+            <h3>Total de Activos</h3>
+            <p style="font-size: 2rem; font-weight: bold;">${totalActivos}</p>
+        </div>
+        <div class="card" style="flex-grow: 1;">
+            <h3>Licencias por Vencer</h3>
+            <p style="font-size: 2rem; font-weight: bold;">${licenciasPorVencer}</p>
+        </div>
+    `;
+    
   </script>
-
 </body>
 </html>

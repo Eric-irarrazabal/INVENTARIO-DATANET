@@ -4,231 +4,211 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestión de Equipos</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 0;
-    }
-
-    #container {
-      display: flex;
-      width: 100%;
-      height: 100vh;
-    }
-
-    #sidebar {
-      width: 250px;
-      background-color: #333;
-      color: white;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-
-    #sidebar h3 {
-      margin-top: 0;
-      font-size: 18px;
-    }
-
-    .collapsible {
-      cursor: pointer;
-      margin: 10px 0;
-      padding: 10px;
-      background-color: #444;
-      color: white;
-      border: none;
-      width: 100%;
-      text-align: left;
-      font-size: 16px;
-    }
-
-    .content {
-      margin-left: 20px;
-      display: none;
-      padding: 10px;
-      background-color: #555;
-    }
-
-    #mainContent {
-      flex-grow: 1;
-      padding: 20px;
-      background-color: #fff;
-      overflow-y: auto;
-    }
-
-    .add-button {
-      background-color: #007BFF;
-      color: white;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .button-container {
-      margin-top: 20px;
-    }
-
-    .input-field {
-      margin-bottom: 10px;
-      padding: 5px;
-      width: 100%;
-    }
-
-    .logout-button {
-      background-color: #FF5733;
-      color: white;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-  </style>
+  <link rel="stylesheet" href="../styles/theme.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body>
-  <a href="../index.html">← Volver al panel</a>
 
-  <div id="container">
-    <!-- Sidebar -->
-    <div id="sidebar">
-      <h3>Gestión de Equipos</h3>
-      <button class="collapsible">Gestión de Equipos</button>
-      <div class="content">
-        <button class="add-button" onclick="mostrarEquipos()">Mostrar Equipos</button>
-        <button class="add-button" onclick="agregarEquipo()">Agregar Nuevo Equipo</button>
-      </div>
-      <button class="logout-button" onclick="logout()">Cerrar sesión</button>
-    </div>
+  <header>
+    <h1>DataNet Inventario</h1>
+    <div id="userInfo"></div>
+  </header>
 
-    <!-- Main Content -->
-    <div id="mainContent">
-      <h2>Bienvenido al Sistema de Gestión de Equipos</h2>
-      <p>Seleccione una opción del menú lateral.</p>
-    </div>
+  <div class="sidebar">
+    <a href="../../index.html"><i class="ph-fill ph-house"></i> Inicio</a>
+    <a href="equipos.html" class="active"><i class="ph-fill ph-desktop"></i> Gestión de Equipos</a>
+    <a href="usuarios.html"><i class="ph-fill ph-users"></i> Gestión de Usuarios</a>
+    <a href="licencias.html"><i class="ph-fill ph-file-text"></i> Gestión de Licencias</a>
+    <a href="sedes_dependencias.html"><i class="ph-fill ph-buildings"></i> Sedes y Dependencias</a>
+    <a href="movimientos.html"><i class="ph-fill ph-arrows-left-right"></i> Movimientos</a>
+    <a href="auditoria.html"><i class="ph-fill ph-list-checks"></i> Auditoría</a>
+    <a href="notificaciones.html"><i class="ph-fill ph-bell"></i> Notificaciones</a>
+    <button class="logout-button" id="btnLogout"><i class="ph-fill ph-sign-out"></i> Cerrar sesión</button>
   </div>
 
-  <script>
-    // Lógica para gestionar los equipos
-    const equipos = JSON.parse(localStorage.getItem('equipos')) || [];
-
-    // Mostrar equipos
-    function mostrarEquipos() {
-      const mainContent = document.getElementById('mainContent');
-      mainContent.innerHTML = `
-        <h2>Equipos</h2>
-        <div class="button-container">
-            <button class="add-button" onclick="exportarEquipos()">Exportar a CSV</button>
-            <button class="add-button" onclick="exportarEquiposXLSX()">Exportar a XLSX</button>
-            <br><br>
-            <input type="file" id="csvFile" accept=".csv" />
-            <button class="add-button" onclick="importarCSV()">Importar CSV</button>
-            <br><br>
-            <input type="file" id="xlsxFile" accept=".xlsx, .xls" />
-            <button class="add-button" onclick="importarXLSX()">Importar XLSX</button>
+  <main>
+    <h1>Gestión de Equipos</h1>
+    <div style="display: flex; gap: 20px;">
+        <div class="card" style="flex: 1;">
+          <h2>Crear Activo</h2>
+          <select id="selEmpresa"></select>
+          <select id="selSede"></select>
+          <select id="selDep"></select>
+          <select id="selUsr"></select>
+          <input id="txtCategoria" placeholder="Categoría" value="Equipo" />
+          <input id="txtMarca" placeholder="Marca" />
+          <input id="txtModelo" placeholder="Modelo" />
+          <input id="txtNroSerie" placeholder="Nro. de Serie" />
+          <select id="selEstado">
+            <option value="activo">Activo</option>
+            <option value="baja">Baja</option>
+            <option value="en-reparacion">En Reparación</option>
+          </select>
+          <button id="btnCrearActivo" class="btn btn-primary">Crear Activo</button>
         </div>
-        <ul id="equipos-list">
-          ${equipos.map(equipo => `<li>${equipo.nombre} - ${equipo.estado} <button onclick="editarEquipo('${equipo.id}')">Editar</button> <button onclick="eliminarEquipo('${equipo.id}')">Eliminar</button></li>`).join('')}
-        </ul>
-        <button class="add-button" onclick="agregarEquipo()">Agregar Nuevo Equipo</button>
-      `;
-    }
 
-    // Agregar un equipo
-    function agregarEquipo() {
-      const nombre = prompt("Ingrese el nombre del equipo:");
-      const estado = prompt("Ingrese el estado del equipo (Activo/Baja/Asignado):");
-      const dependencia = prompt("Ingrese la dependencia del equipo:");
-      const usuario = prompt("Ingrese el usuario asignado:");
-      const sede = prompt("Ingrese la sede del equipo:");
-      const categoria = prompt("Ingrese la categoría (PC, Laptop, etc.):");
-      const marca = prompt("Ingrese la marca del equipo:");
-      const modelo = prompt("Ingrese el modelo del equipo:");
-      const nro_serie = prompt("Ingrese el número de serie:");
-      const fecha_alta = new Date().toLocaleDateString();
+        <div class="card" style="flex: 2;">
+          <h2>Activos</h2>
+          <div id="filters" style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <select id="filterEmpresa" style="flex: 1;"></select>
+            <select id="filterSede" style="flex: 1;"></select>
+            <select id="filterDep" style="flex: 1;"></select>
+            <select id="filterUsr" style="flex: 1;"></select>
+          </div>
+          <table id="activos-table">
+            <thead>
+              <tr>
+                <th>Activo</th>
+                <th>Estado</th>
+                <th>Ubicación</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="activos-list">
+            </tbody>
+          </table>
+        </div>
+    </div>
+  </main>
 
-      const equipo = {
-        id: Date.now().toString(), // Usamos la fecha como ID único
-        nombre,
-        estado,
-        dependencia,
-        usuario,
-        sede,
-        categoria,
-        marca,
-        modelo,
-        nro_serie,
-        fecha_alta
-      };
+  <script type="module">
+    import { getDB } from "../scripts/storage.js";
+    import { createActivo, assignActivo, unassignActivo, listActivos } from "../scripts/domain.js";
 
-      equipos.push(equipo);
-      localStorage.setItem('equipos', JSON.stringify(equipos)); // Guardar en localStorage
-      mostrarEquipos(); // Actualizar la lista de equipos
-    }
+    // Selects para creación
+    const selEmpresa = document.getElementById('selEmpresa');
+    const selSede = document.getElementById('selSede');
+    const selDep = document.getElementById('selDep');
+    const selUsr = document.getElementById('selUsr');
 
-    // Editar un equipo
-    function editarEquipo(id) {
-      const equipo = equipos.find(eq => eq.id === id);
-      if (equipo) {
-        const nombre = prompt("Editar nombre del equipo:", equipo.nombre);
-        const estado = prompt("Editar estado del equipo:", equipo.estado);
-        const dependencia = prompt("Editar dependencia del equipo:", equipo.dependencia);
-        const usuario = prompt("Editar usuario asignado:", equipo.usuario);
-        const sede = prompt("Editar sede del equipo:", equipo.sede);
-        const categoria = prompt("Editar categoría del equipo:", equipo.categoria);
-        const marca = prompt("Editar marca del equipo:", equipo.marca);
-        const modelo = prompt("Editar modelo del equipo:", equipo.modelo);
-        const nro_serie = prompt("Editar número de serie del equipo:", equipo.nro_serie);
+    // Selects para filtros
+    const filterEmpresa = document.getElementById('filterEmpresa');
+    const filterSede = document.getElementById('filterSede');
+    const filterDep = document.getElementById('filterDep');
+    const filterUsr = document.getElementById('filterUsr');
 
-        equipo.nombre = nombre;
-        equipo.estado = estado;
-        equipo.dependencia = dependencia;
-        equipo.usuario = usuario;
-        equipo.sede = sede;
-        equipo.categoria = categoria;
-        equipo.marca = marca;
-        equipo.modelo = modelo;
-        equipo.nro_serie = nro_serie;
+    const activosList = document.getElementById('activos-list');
 
-        localStorage.setItem('equipos', JSON.stringify(equipos)); // Guardar los cambios en localStorage
-        mostrarEquipos(); // Actualizar la lista
-      }
-    }
-
-    // Eliminar un equipo
-    function eliminarEquipo(id) {
-      const confirmacion = confirm("¿Estás seguro de eliminar este equipo?");
-      if (confirmacion) {
-        const index = equipos.findIndex(eq => eq.id === id);
-        if (index !== -1) {
-          equipos.splice(index, 1); // Eliminar el equipo del arreglo
-          localStorage.setItem('equipos', JSON.stringify(equipos)); // Actualizar en localStorage
-          mostrarEquipos(); // Actualizar la lista
+    function setupChainedSelects(empresaEl, sedeEl, depEl, usrEl, callback) {
+        function updateSedes() {
+            const db = getDB();
+            const empId = empresaEl.value;
+            const sedes = db.sedes.filter(s => s.empresa_id === empId);
+            sedeEl.innerHTML = '<option value="">-- Sede --</option>' + sedes.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+            updateDeps();
         }
-      }
+
+        function updateDeps() {
+            const db = getDB();
+            const sedeId = sedeEl.value;
+            const deps = db.dependencias.filter(d => d.sede_id === sedeId);
+            depEl.innerHTML = '<option value="">-- Dependencia --</option>' + deps.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('');
+            updateUsrs();
+        }
+
+        function updateUsrs() {
+            const db = getDB();
+            const depId = depEl.value;
+            const usrs = db.usuarios.filter(u => u.dependencia_id === depId);
+            usrEl.innerHTML = '<option value="">-- Usuario --</option>' + usrs.map(u => `<option value="${u.id}">${u.nombre}</option>`).join('');
+            if (callback) callback();
+        }
+
+        empresaEl.onchange = updateSedes;
+        sedeEl.onchange = updateDeps;
+        depEl.onchange = updateUsrs;
+        if (usrEl) usrEl.onchange = callback;
+        if (callback) empresaEl.addEventListener('change', callback);
+        if (callback) sedeEl.addEventListener('change', callback);
+        if (callback) depEl.addEventListener('change', callback);
     }
 
-    // Logout
-    function logout() {
-      localStorage.removeItem('usuario_autenticado');
-      alert("Has cerrado sesión.");
-      window.location.reload();
-    }
 
-    // Cargar equipos al iniciar
-    window.onload = function() {
-      mostrarEquipos(); // Cargar equipos desde localStorage al cargar la página
+    function loadFilterData() {
+        const db = getDB();
+        const empId = filterEmpresa.value;
+        const sedeId = filterSede.value || null;
+        const depId = filterDep.value || null;
+        const usrId = filterUsr.value || null;
+
+        const activos = listActivos({ empresa_id: empId, sede_id: sedeId, dependencia_id: depId, usuario_id: usrId });
+        
+        activosList.innerHTML = activos.map(a => {
+            const sede = db.sedes.find(s => s.id === a.sede_id);
+            const dep = db.dependencias.find(d => d.id === a.dependencia_id);
+            const usr = db.usuarios.find(u => u.id === a.usuario_id);
+            let breadcrumb = db.empresas.find(e => e.id === a.empresa_id)?.nombre || '';
+            if (sede) breadcrumb += ` › ${sede.nombre}`;
+            if (dep) breadcrumb += ` › ${dep.nombre}`;
+            if (usr) breadcrumb += ` › ${usr.nombre}`;
+
+            return `<tr>
+                <td>${a.marca} ${a.modelo} <br><small>${a.nro_serie}</small></td>
+                <td>${a.estado}</td>
+                <td><small>${breadcrumb}</small></td>
+                <td>
+                    <button class="btn btn-outline" onclick="window.unassign('${a.id}', 'usuario')">Quitar Usuario</button>
+                    <button class="btn btn-outline" onclick="window.unassign('${a.id}', 'dependencia')">Quitar Dep.</button>
+                    <button class="btn btn-danger" onclick="window.unassign('${a.id}', 'all')">Quitar Todo</button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+    
+    window.unassign = (activo_id, scope) => {
+        if (confirm(`¿Seguro que desea quitar la asignación (${scope})?`)) {
+            unassignActivo(activo_id, scope);
+            loadFilterData();
+        }
     };
-  </script>
-  </script>
-  <script type="module" src="../scripts/control_acceso.js"></script>
-  <script>
+
+    function init() {
+        const db = getDB();
+        const empresasOptions = db.empresas.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+        selEmpresa.innerHTML = empresasOptions;
+        filterEmpresa.innerHTML = empresasOptions;
+
+        setupChainedSelects(selEmpresa, selSede, selDep, selUsr);
+        setupChainedSelects(filterEmpresa, filterSede, filterDep, filterUsr, loadFilterData);
+        
+        // Trigger initial loads
+        selEmpresa.dispatchEvent(new Event('change'));
+        filterEmpresa.dispatchEvent(new Event('change'));
+    }
+
+
+    document.getElementById('btnCrearActivo').onclick = () => {
+      const empresa_id = selEmpresa.value;
+      const sede_id = selSede.value || null;
+      const dependencia_id = selDep.value || null;
+      const usuario_id = selUsr.value || null;
+      const categoria = document.getElementById('txtCategoria').value.trim();
+      const marca = document.getElementById('txtMarca').value.trim();
+      const modelo = document.getElementById('txtModelo').value.trim();
+      const nro_serie = document.getElementById('txtNroSerie').value.trim();
+      const estado = document.getElementById('selEstado').value;
+
+      if (empresa_id && categoria && marca && modelo && nro_serie) {
+        createActivo(empresa_id, { sede_id, dependencia_id, usuario_id, categoria, estado, marca, modelo, nro_serie });
+        alert("Activo creado");
+        loadFilterData();
+      } else {
+        alert("Por favor, complete todos los campos obligatorios.");
+      }
+    };
+
+    init();
+
+    // Auth
+    const usuarioAutenticado = JSON.parse(localStorage.getItem('usuario_autenticado'));
+    if (usuarioAutenticado) {
+        document.getElementById('userInfo').innerText = `Conectado como: ${usuarioAutenticado.nombre}`;
+    }
     document.getElementById('btnLogout')?.addEventListener('click', () => {
       localStorage.removeItem('usuario_autenticado');
       localStorage.removeItem('session_expires');
-      location.href = 'login.html';
+      location.href = '../../login.html';
     });
   </script>
-
 </body>
 </html>
